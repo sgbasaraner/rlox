@@ -6,8 +6,8 @@ use std::env;
 fn main() {
     let args: Vec<String> = env::args().collect();
     match args.len() {
-        2 => runFile(args[1].to_string()),
-        1 => runPrompt(),
+        2 => run_file(args[1].to_string()),
+        1 => run_prompt(),
         _ => {
             println!("Usage: rlox [script]");
             std::process::exit(64);
@@ -15,7 +15,7 @@ fn main() {
     }
 }
 
-fn runPrompt() {
+fn run_prompt() {
     let reader = Interface::new("rlox").expect("Couldn't initialize prompt reader.");
 
     reader.set_prompt("> ").expect("Couldn't set reader prompt.");
@@ -28,7 +28,7 @@ fn runPrompt() {
     }
 }
 
-fn runFile(file_name: String) {
+fn run_file(file_name: String) {
     let file_contents = std::fs::read_to_string(file_name).expect("Couldn't read file.");
     run(file_contents);
 }
