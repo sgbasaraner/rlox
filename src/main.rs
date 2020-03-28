@@ -34,5 +34,18 @@ fn runFile(file_name: String) {
 }
 
 fn run(source_code: String) {
+    let tokens = tokenize(source_code);
+    for token in tokens {
+        println!("{:?}", token);
+    }
+}
+
+fn tokenize(source_code: String) -> Vec<Token> {
     unimplemented!();
+}
+
+#[derive(Debug)]
+enum Token {
+    Variant1,
+    Variant2,
 }
