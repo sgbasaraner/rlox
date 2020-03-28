@@ -62,7 +62,21 @@ fn report(line: i32, location: String, message: String) {
 }
 
 #[derive(Debug)]
-enum Token {
+struct Token {
+    token_type: TokenType,
+    lexeme: String,
+    literal: Literal,
+    line: i32
+}
+
+#[derive(Debug)]
+enum Literal {
+    Variant1,
+    Variant2,
+}
+
+#[derive(Debug)]
+enum TokenType {
     // Single-character tokens.                      
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
     COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR, 
