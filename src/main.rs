@@ -16,6 +16,11 @@ fn runPrompt() {
     unimplemented!();
 }
 
-fn runFile(file: String) {
+fn runFile(file_name: String) {
+    let file_contents = std::fs::read_to_string(file_name).expect("Couldn't read file.");
+    run(file_contents);
+}
+
+fn run(sourceCode: String) {
     unimplemented!();
 }
