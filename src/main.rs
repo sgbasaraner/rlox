@@ -3,6 +3,8 @@ extern crate linefeed;
 use linefeed::{Interface, ReadResult};
 use std::env;
 
+static mut HAD_ERROR: bool = false;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     match args.len() {
@@ -25,12 +27,18 @@ fn run_prompt() {
         if !input.trim().is_empty() {
             reader.add_history(input);
         }
+        unsafe { HAD_ERROR = false; }
     }
 }
 
 fn run_file(file_name: String) {
     let file_contents = std::fs::read_to_string(file_name).expect("Couldn't read file.");
     run(file_contents);
+    unsafe {
+        if HAD_ERROR {
+            std::process::exit(65);
+        }
+    }
 }
 
 fn run(source_code: String) {
@@ -42,6 +50,15 @@ fn run(source_code: String) {
 
 fn tokenize(source_code: String) -> Vec<Token> {
     unimplemented!();
+}
+
+fn error(line: i32, message: String) {
+    report(line, String::new(), message);
+}
+
+fn report(line: i32, location: String, message: String) {
+    eprintln!("[line {}] Error {}: {}", line, location, message);
+    unsafe { HAD_ERROR = true; }
 }
 
 #[derive(Debug)]
