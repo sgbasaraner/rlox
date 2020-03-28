@@ -33,6 +33,6 @@ fn runFile(file_name: String) {
     run(file_contents);
 }
 
-fn run(sourceCode: String) {
+fn run(source_code: String) {
     unimplemented!();
 }
