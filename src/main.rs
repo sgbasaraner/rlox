@@ -17,6 +17,8 @@ fn main() {
     }
 }
 
+// Meta
+
 fn run_prompt() {
     let reader = Interface::new("rlox").expect("Couldn't initialize prompt reader.");
 
@@ -41,15 +43,13 @@ fn run_file(file_name: String) {
     }
 }
 
+// Interpretation
+
 fn run(source_code: String) {
     let tokens = tokenize(source_code);
     for token in tokens {
         println!("{:?}", token);
     }
-}
-
-fn tokenize(source_code: String) -> Vec<Token> {
-    unimplemented!();
 }
 
 fn error(line: i32, message: String) {
@@ -59,6 +59,12 @@ fn error(line: i32, message: String) {
 fn report(line: i32, location: String, message: String) {
     eprintln!("[line {}] Error {}: {}", line, location, message);
     unsafe { HAD_ERROR = true; }
+}
+
+// Tokenization
+
+fn tokenize(source_code: String) -> Vec<Token> {
+    unimplemented!();
 }
 
 #[derive(Debug)]
