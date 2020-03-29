@@ -1,3 +1,5 @@
+mod scanner;
+
 extern crate linefeed;
 
 use linefeed::{Interface, ReadResult};
@@ -46,14 +48,15 @@ fn run_file(file_name: String) {
 // Interpretation
 
 fn run(source_code: String) {
-    let tokens = tokenize(source_code);
+    let mut scanner = scanner::Scanner::new(source_code);
+    let tokens = scanner.scan_tokens();
     for token in tokens {
         println!("{:?}", token);
     }
 }
 
-fn error(line: i32, message: String) {
-    report(line, String::new(), message);
+fn error(err: RloxError) {
+    report(err.line, String::new(), err.message);
 }
 
 fn report(line: i32, location: String, message: String) {
@@ -61,42 +64,16 @@ fn report(line: i32, location: String, message: String) {
     unsafe { HAD_ERROR = true; }
 }
 
-// Tokenization
-
-fn tokenize(source_code: String) -> Vec<Token> {
-    unimplemented!();
+pub struct RloxError {
+    line: i32,
+    message: String
 }
 
-#[derive(Debug)]
-struct Token {
-    token_type: TokenType,
-    lexeme: String,
-    literal: Literal,
-    line: i32
-}
-
-#[derive(Debug)]
-enum Literal {
-    Variant1,
-    Variant2,
-}
-
-#[derive(Debug)]
-enum TokenType {
-    // Single-character tokens.           
-    LeftParen, RightParen, LeftBrace, RightBrace,
-    Comma, Dot, Minus, Plus, Semicolon, Slash, Star,           
-
-    // One or two character tokens.     
-    Bang, BangEqual, Equal, EqualEqual,
-    Greater, GreaterEqual, Less, LessEqual, 
-
-    // Literals.                                     
-    Identifier, String, Number,
-
-    // Keywords.                                     
-    And, Class, Else, False, Fun, For, If, Nil, Or,
-    Print, Return, Super, This, True, Var, While,    
-
-    EOF
+impl RloxError {
+    pub fn new(line: i32, message: &str) -> RloxError {
+        RloxError {
+            line: line,
+            message: message.to_string()
+        }
+    }
 }
