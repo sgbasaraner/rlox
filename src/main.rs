@@ -24,7 +24,7 @@ fn main() {
 fn run_prompt() {
     let reader = Interface::new("rlox").expect("Couldn't initialize prompt reader.");
 
-    reader.set_prompt("> ").expect("Couldn't set reader prompt.");
+    reader.set_prompt("rlox> ").expect("Couldn't set reader prompt.");
 
     while let ReadResult::Input(input) = reader.read_line().expect("Couldn't read line.") {
         run(input.clone());
