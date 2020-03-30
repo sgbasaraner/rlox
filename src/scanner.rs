@@ -41,7 +41,7 @@ impl Scanner {
         let eof_token = Token {
             token_type: TokenType::EOF,
             lexeme: String::new(),
-            literal: Literal::Non,
+            literal: None,
             line: self.line
         };
 
@@ -65,10 +65,10 @@ impl Scanner {
     }
 
     fn add_non_literal_token(&mut self, token_type: TokenType) {
-        self.add_token(token_type, Literal::Non);
+        self.add_token(token_type, None);
     }
 
-    fn add_token(&mut self, token_type: TokenType, literal: Literal) {
+    fn add_token(&mut self, token_type: TokenType, literal: Option<Literal>) {
         let substring = (self.source_code[self.start..self.current]).to_string();
         let token = Token {
             token_type: token_type,
@@ -187,7 +187,7 @@ impl Scanner {
 
         // Trim the surrounding quotes
         let val = (self.source_code[(self.start + 1)..(self.current - 1)]).to_string();
-        self.add_token(TokenType::String, Literal::String(val));
+        self.add_token(TokenType::String, Some(Literal::String(val)));
     }
 
     fn number(&mut self) {
@@ -205,7 +205,7 @@ impl Scanner {
         }
 
         let float: f64 = self.source_code[self.start..self.current].parse().expect("Float parsing error.");
-        self.add_token(TokenType::Number, Literal::Number(float));
+        self.add_token(TokenType::Number, Some(Literal::Number(float)));
     }
 
     fn identifier(&mut self) {
@@ -250,13 +250,12 @@ fn is_alphanumeric_or_underscore(c: char) -> bool {
 pub struct Token {
     token_type: TokenType,
     lexeme: String,
-    literal: Literal,
+    literal: Option<Literal>,
     line: i32
 }
 
 #[derive(Debug, Clone)]
 pub enum Literal {
-    Non,
     String(String),
     Number(f64)
 }
