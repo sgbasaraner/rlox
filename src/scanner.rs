@@ -246,6 +246,7 @@ fn is_alphanumeric_or_underscore(c: char) -> bool {
     c == '_' || c.is_alphanumeric()
 }
 
+// TODO: this type could be split into two, one with literal and one without
 #[derive(Debug, Clone)]
 pub struct Token {
     token_type: TokenType,
