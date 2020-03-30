@@ -235,7 +235,10 @@ impl Scanner {
         };
         let token = keyword_map.get(substring).unwrap_or(&TokenType::Identifier);
 
-        self.add_non_literal_token(*token);
+        match token {
+            TokenType::Nil => self.add_token(*token, Some(Literal::Nil)),
+            _ => self.add_non_literal_token(*token),
+        };
     }
 }
 
