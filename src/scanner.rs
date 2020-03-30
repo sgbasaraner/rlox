@@ -1,5 +1,6 @@
 use crate::RloxError;
 use crate::error;
+use std::fmt;
 
 pub struct Scanner {
     source_code: String,
@@ -250,7 +251,7 @@ fn is_alphanumeric_or_underscore(c: char) -> bool {
 #[derive(Debug, Clone)]
 pub struct Token {
     token_type: TokenType,
-    lexeme: String,
+    pub lexeme: String,
     literal: Option<Literal>,
     line: i32
 }
@@ -258,7 +259,22 @@ pub struct Token {
 #[derive(Debug, Clone)]
 pub enum Literal {
     String(String),
-    Number(f64)
+    Number(f64),
+    Nil
+}
+
+impl fmt::Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let string = match self {
+            Literal::String(string) => string.to_owned(),
+            Literal::Number(n) => {
+                let num = n;
+                format!("{}", num)
+            },
+            Literal::Nil => "nil".to_owned()
+        };
+        write!(f, "{}", string)
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
