@@ -1,6 +1,7 @@
 mod scanner;
 mod grammar;
 mod token;
+mod parser;
 
 extern crate linefeed;
 

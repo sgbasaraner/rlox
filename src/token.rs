@@ -1,11 +1,24 @@
 use std::fmt;
 
-// TODO: this type could be split into two, one with literal and one without
 #[derive(Debug, Clone)]
-pub struct Token {
+pub enum Token {
+    NonLiteral(TokenDetails),
+    Literal(TokenDetails, Literal)
+}
+
+impl Token {
+    pub fn details(&self) -> TokenDetails {
+        match self {
+            Token::NonLiteral(details) => details.clone(),
+            Token::Literal(details, _) => details.clone()
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TokenDetails {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Option<Literal>,
     pub line: i32
 }
 
@@ -13,7 +26,9 @@ pub struct Token {
 pub enum Literal {
     String(String),
     Number(f64),
-    Nil
+    Nil,
+    True,
+    False
 }
 
 impl fmt::Display for Literal {
@@ -30,7 +45,7 @@ impl fmt::Display for Literal {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.           
     LeftParen, RightParen, LeftBrace, RightBrace,

@@ -1,7 +1,8 @@
 use crate::token::{Token, Literal}; 
 use std::fmt;
 
-enum Expr {
+#[derive(Clone)]
+pub enum Expr {
     Binary { left: Box<Expr>, operator: Token, right: Box<Expr> },
     Grouping(Box<Expr>),
     Literal(Literal),
@@ -11,10 +12,10 @@ enum Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let string = match self {
-            Expr::Binary { left, operator, right } => parenthesize(&operator.lexeme, vec![left, right]),
+            Expr::Binary { left, operator, right } => parenthesize(&operator.details().lexeme, vec![left, right]),
             Expr::Grouping(expr) => parenthesize("group", vec![expr]),
             Expr::Literal(literal) => format!("{}", literal),
-            Expr::Unary { operator, right } => parenthesize(&operator.lexeme, vec![right])
+            Expr::Unary { operator, right } => parenthesize(&operator.details().lexeme, vec![right])
         };
         write!(f, "{}", string)
     }

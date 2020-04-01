@@ -1,6 +1,6 @@
 use crate::RloxError;
 use crate::error;
-use crate::token::{TokenType, Literal, Token};
+use crate::token::{TokenType, Literal, Token, TokenDetails};
 
 pub struct Scanner {
     source_code: String,
@@ -39,12 +39,13 @@ impl Scanner {
             self.scan_token()
         }
 
-        let eof_token = Token {
-            token_type: TokenType::EOF,
-            lexeme: String::new(),
-            literal: None,
-            line: self.line
-        };
+        let eof_token = Token::NonLiteral(
+            TokenDetails {
+                token_type: TokenType::EOF,
+                lexeme: String::new(),
+                line: self.line
+            }
+        );
 
         self.tokens.push(eof_token);
         self.tokens.clone()
@@ -71,12 +72,17 @@ impl Scanner {
 
     fn add_token(&mut self, token_type: TokenType, literal: Option<Literal>) {
         let substring = (self.source_code[self.start..self.current]).to_string();
-        let token = Token {
+        let details = TokenDetails {
             token_type: token_type,
             lexeme: substring,
-            literal: literal,
             line: self.line
         };
+
+        let token = match literal {
+            Some(v) => Token::Literal(details, v),
+            None => Token::NonLiteral(details),
+        };
+
         self.tokens.push(token);
     }
 
@@ -237,6 +243,8 @@ impl Scanner {
 
         match token {
             TokenType::Nil => self.add_token(*token, Some(Literal::Nil)),
+            TokenType::True => self.add_token(*token, Some(Literal::True)),
+            TokenType::False => self.add_token(*token, Some(Literal::False)),
             _ => self.add_non_literal_token(*token),
         };
     }
