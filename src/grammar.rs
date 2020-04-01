@@ -1,4 +1,4 @@
-use crate::scanner::{Token, Literal}; 
+use crate::token::{Token, Literal}; 
 use std::fmt;
 
 enum Expr {
