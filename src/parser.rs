@@ -134,14 +134,6 @@ impl Parser {
 
         Err(err_token(self.peek(), "Expect expression."))
     }
-
-    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<Token, RloxError> {
-        if self.check(&token_type) { 
-            Ok(self.advance().clone()) 
-        } else {
-            Err(err_token(self.peek(), message))
-        }
-    }
 }
 
 fn err_token(token: &Token, message: &str) -> RloxError {
@@ -190,5 +182,13 @@ impl Parser {
         }
 
         false
-    }      
+    }
+    
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<Token, RloxError> {
+        if self.check(&token_type) { 
+            Ok(self.advance().clone()) 
+        } else {
+            Err(err_token(self.peek(), message))
+        }
+    }
 }
