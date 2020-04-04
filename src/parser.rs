@@ -1,9 +1,9 @@
 use crate::token::{Token, TokenType};
 use crate::grammar::Expr;
-use crate::{RloxError, error};
+use crate::RloxError;
 
 #[derive(Debug, Clone)]
-struct Parser {
+pub struct Parser {
     tokens: Vec<Token>,
     current: usize
 }
@@ -18,75 +18,97 @@ impl Parser {
 }
 
 impl Parser {
-    fn expression(&mut self) -> Expr {
+
+    pub fn parse(&mut self) -> Result<Expr, RloxError> {
+        self.expression()
+    }
+
+    fn expression(&mut self) -> Result<Expr, RloxError> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Expr {
-        let mut expr = self.comparison();
-        while self.match_toks(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
-            let clone = self.clone();
-            let operator = clone.previous();
-            let right = self.comparison();
-            expr = Expr::Binary {left: Box::from(expr), operator: operator.clone(), right: Box::from(right)};
-        }
+    fn equality(&mut self) -> Result<Expr, RloxError> {
+        self.comparison().and_then(|expr| {
+            let mut expr = expr.clone();
 
-        expr
+            while self.match_toks(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
+                let clone = self.clone();
+                let operator = clone.previous();
+                match self.comparison() {
+                    Ok(right) => expr = Expr::Binary {left: Box::from(expr), operator: operator.clone(), right: Box::from(right)},
+                    Err(e) => return Err(e)
+                };
+            }
+    
+            Ok(expr)
+        })
     }
 
-    fn comparison(&mut self) -> Expr {
-        let mut expr = self.addition();
+    fn comparison(&mut self) -> Result<Expr, RloxError> {
+        self.addition().and_then(|expr| {
+            let mut expr = expr.clone();
 
-        while self.match_toks(vec![TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
-            let clone = self.clone();
-            let operator = clone.previous();
-            let right = self.addition();
-            expr = Expr::Binary {left: Box::from(expr), operator: operator.clone(), right: Box::from(right)};
-        }
-
-        expr
+            while self.match_toks(vec![TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
+                let clone = self.clone();
+                let operator = clone.previous();
+                match self.addition() {
+                    Ok(right) => expr = Expr::Binary {left: Box::from(expr), operator: operator.clone(), right: Box::from(right)},
+                    Err(e) => return Err(e)
+                };
+            }
+    
+            Ok(expr)
+        })
     }
 
-    fn addition(&mut self) -> Expr {
-        let mut expr = self.multiplication();
+    fn addition(&mut self) -> Result<Expr, RloxError> {
+        self.multiplication().and_then(|expr| {
+            let mut expr = expr.clone();
 
-        while self.match_toks(vec![TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
-            let clone = self.clone();
-            let operator = clone.previous();
-            let right = self.multiplication();
-            expr = Expr::Binary {left: Box::from(expr), operator: operator.clone(), right: Box::from(right)};
-        }
-
-        expr
+            while self.match_toks(vec![TokenType::Minus, TokenType::Plus]) {
+                let clone = self.clone();
+                let operator = clone.previous();
+                match self.multiplication() {
+                    Ok(right) => expr = Expr::Binary {left: Box::from(expr), operator: operator.clone(), right: Box::from(right)},
+                    Err(e) => return Err(e)
+                };
+            }
+    
+            Ok(expr)
+        })
     }
 
-    fn multiplication(&mut self) -> Expr {
-        let mut expr = self.unary();
-
-        while self.match_toks(vec![TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
-            let clone = self.clone();
-            let operator = clone.previous();
-            let right = self.unary();
-            expr = Expr::Binary {left: Box::from(expr), operator: operator.clone(), right: Box::from(right)};
-        }
-
-        expr
+    fn multiplication(&mut self) -> Result<Expr, RloxError> {
+        self.unary().and_then(|expr| {
+            let mut expr = expr.clone();
+            while self.match_toks(vec![TokenType::Slash, TokenType::Star]) {
+                let clone = self.clone();
+                let operator = clone.previous();
+                match self.unary() {
+                    Ok(right) => expr = Expr::Binary {left: Box::from(expr), operator: operator.clone(), right: Box::from(right)},
+                    Err(err) => return Err(err)
+                };
+            }
+    
+            return Ok(expr);
+        })
     }
 
-    fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Result<Expr, RloxError> {
         if !self.match_toks(vec![TokenType::Bang, TokenType::Minus]) { 
             return self.primary();
         }
         let clone = self.clone();
         let operator = clone.previous();
-        let right = self.unary();
-        Expr::Unary { 
-            operator: operator.clone(),
-            right: Box::from(right)
-        }
+        self.unary().and_then(|right| {
+            Ok(Expr::Unary { 
+                operator: operator.clone(),
+                right: Box::from(right)
+            })
+        })
     }
 
-    fn primary(&mut self) -> Expr {
+    fn primary(&mut self) -> Result<Expr, RloxError> {
         let literal_tokens = vec![
             TokenType::False,
             TokenType::True,
@@ -95,38 +117,41 @@ impl Parser {
             TokenType::Number
         ];
         if self.match_toks(literal_tokens) { 
-            match self.previous() {
-                Token::Literal(_, literal) => return Expr::Literal(literal.clone()),
-                _ => panic!("Parser error. Expected literal."),
+            return match self.previous() {
+                Token::Literal(_, literal) => Ok(Expr::Literal(literal.clone())),
+                _ => Err(RloxError::internal("Parser expected literal.", "")),
             }
         }
 
         if self.match_toks(vec![TokenType::LeftParen]) {
-            let expr = self.expression();
-            self.consume(TokenType::RightParen, "Expect ')' after expression.").err().map( |err| {
-                error(err);
-                panic!();
+            return self.expression().and_then(|expr| {
+                match self.consume(TokenType::RightParen, "Expect ')' after expression.") {
+                    Ok(_) => Ok(Expr::Grouping(Box::from(expr))),
+                    Err(err) => Err(err)
+                }
             });
-            return Expr::Grouping(Box::from(expr));
         }
 
-        panic!("Parser error.")
+        Err(err_token(self.peek(), "Expect expression."))
     }
 
     fn consume(&mut self, token_type: TokenType, message: &str) -> Result<Token, RloxError> {
         if self.check(&token_type) { 
             Ok(self.advance().clone()) 
         } else {
-            let token = self.peek();
-            let details = token.details();
-            let location = if token_type == TokenType::EOF {
-                " at end".to_owned()
-            } else {
-                format!(" at '{}'!", details.lexeme)
-            };
-            Err(RloxError::new(details.line, message, &location))
+            Err(err_token(self.peek(), message))
         }
     }
+}
+
+fn err_token(token: &Token, message: &str) -> RloxError {
+    let details = token.details();
+    let location = if details.token_type == TokenType::EOF {
+        " at end".to_owned()
+    } else {
+        format!(" at '{}'!", details.lexeme)
+    };
+    RloxError::new(details.line, message, &location)
 }
 
 impl Parser {

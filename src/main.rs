@@ -53,13 +53,17 @@ fn run_file(file_name: String) {
 fn run(source_code: String) {
     let mut scanner = scanner::Scanner::new(source_code);
     let tokens = scanner.scan_tokens();
-    for token in tokens {
-        println!("{:?}", token);
+    match parser::Parser::new(tokens).parse() {
+        Ok(expr) => println!("{}", expr),
+        Err(e) => error(e)
     }
 }
 
 fn error(err: RloxError) {
-    report(err.line, err.location, err.message);
+    match err.line {
+        Some(line) => report(line, err.location, err.message),
+        None => report_internal(err.location, err.message)
+    }
 }
 
 fn report(line: i32, location: String, message: String) {
@@ -67,8 +71,14 @@ fn report(line: i32, location: String, message: String) {
     unsafe { HAD_ERROR = true; }
 }
 
+fn report_internal(location: String, message: String) {
+    eprintln!("Error {}: {}", location, message);
+    unsafe { HAD_ERROR = true; }
+}
+
+#[derive(Debug)]
 pub struct RloxError {
-    line: i32,
+    line: Option<i32>,
     message: String,
     location: String
 }
@@ -76,7 +86,15 @@ pub struct RloxError {
 impl RloxError {
     pub fn new(line: i32, message: &str, location: &str) -> RloxError {
         RloxError {
-            line: line,
+            line: Some(line),
+            message: message.to_string(),
+            location: location.to_string()
+        }
+    }
+
+    pub fn internal(message: &str, location: &str) -> RloxError {
+        RloxError {
+            line: None,
             message: message.to_string(),
             location: location.to_string()
         }

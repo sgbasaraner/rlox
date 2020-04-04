@@ -39,7 +39,9 @@ impl fmt::Display for Literal {
                 let num = n;
                 format!("{}", num)
             },
-            Literal::Nil => "nil".to_owned()
+            Literal::Nil => "nil".to_owned(),
+            Literal::True => "true".to_owned(),
+            Literal::False => "false".to_owned()
         };
         write!(f, "{}", string)
     }
