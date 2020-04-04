@@ -183,12 +183,28 @@ impl Parser {
 
         false
     }
-    
+
     fn consume(&mut self, token_type: TokenType, message: &str) -> Result<Token, RloxError> {
         if self.check(&token_type) { 
             Ok(self.advance().clone()) 
         } else {
             Err(err_token(self.peek(), message))
         }
+    }
+
+    fn synchronize(&mut self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            if self.previous().details().token_type == TokenType::Semicolon { return; }
+
+            match self.peek().details().token_type {
+                TokenType::Class | TokenType::Fun | TokenType::Var | TokenType::For | TokenType::If 
+                | TokenType::While | TokenType::Print | TokenType::Return => return,
+                _ => ()
+            }
+        }
+
+        self.advance()
     }
 }
