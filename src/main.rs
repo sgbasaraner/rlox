@@ -59,7 +59,7 @@ fn run(source_code: String) {
 }
 
 fn error(err: RloxError) {
-    report(err.line, String::new(), err.message);
+    report(err.line, err.location, err.message);
 }
 
 fn report(line: i32, location: String, message: String) {
@@ -69,14 +69,16 @@ fn report(line: i32, location: String, message: String) {
 
 pub struct RloxError {
     line: i32,
-    message: String
+    message: String,
+    location: String
 }
 
 impl RloxError {
-    pub fn new(line: i32, message: &str) -> RloxError {
+    pub fn new(line: i32, message: &str, location: &str) -> RloxError {
         RloxError {
             line: line,
-            message: message.to_string()
+            message: message.to_string(),
+            location: location.to_string()
         }
     }
 }

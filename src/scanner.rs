@@ -149,7 +149,7 @@ impl Scanner {
                 } else if is_alphabetic_or_underscore(c) {
                     self.identifier()
                 } else {
-                    error(RloxError::new(self.line, "Unexpected character."))
+                    error(RloxError::new(self.line, "Unexpected character.", ""))
                 }
             }
         }
@@ -185,7 +185,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            error(RloxError::new(self.line, "Unterminated string."));
+            error(RloxError::new(self.line, "Unterminated string.", ""));
             return;
         }
 

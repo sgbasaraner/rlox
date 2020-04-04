@@ -1,5 +1,6 @@
 use crate::token::{Token, TokenType};
 use crate::grammar::Expr;
+use crate::{RloxError, error};
 
 #[derive(Debug, Clone)]
 struct Parser {
@@ -102,21 +103,35 @@ impl Parser {
 
         if self.match_toks(vec![TokenType::LeftParen]) {
             let expr = self.expression();
-            self.consume(TokenType::RightParen, "Expect ')' after expression.");
+            self.consume(TokenType::RightParen, "Expect ')' after expression.").err().map( |err| {
+                error(err);
+                panic!();
+            });
             return Expr::Grouping(Box::from(expr));
         }
 
         panic!("Parser error.")
     }
 
-    fn consume(&mut self, token_type: TokenType, message: &str) -> Token {
-        unimplemented!()
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<Token, RloxError> {
+        if self.check(&token_type) { 
+            Ok(self.advance().clone()) 
+        } else {
+            let token = self.peek();
+            let details = token.details();
+            let location = if token_type == TokenType::EOF {
+                " at end".to_owned()
+            } else {
+                format!(" at '{}'!", details.lexeme)
+            };
+            Err(RloxError::new(details.line, message, &location))
+        }
     }
 }
 
 impl Parser {
     fn advance(&mut self) -> &Token {
-        if (!self.is_at_end()) {
+        if !self.is_at_end() {
             self.current = self.current + 1;
         }
         self.previous()
