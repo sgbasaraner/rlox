@@ -12,30 +12,16 @@ impl Evaluable for Expr {
             Expr::Binary { left, operator, right } => {
                 left.evaluate().and_then(|left| right.evaluate().and_then(|right| {
                     match operator.details().token_type {
-                        TokenType::Greater => {
-                            cast_nums(left, right).and_then(|(l, r)| Ok(Literal::from(l > r)))
-                        },
-                        TokenType::GreaterEqual => {
-                            cast_nums(left, right).and_then(|(l, r)| Ok(Literal::from(l >= r)))
-                        },
-                        TokenType::Less => {
-                            cast_nums(left, right).and_then(|(l, r)| Ok(Literal::from(l < r)))
-                        },
-                        TokenType::LessEqual => {
-                            cast_nums(left, right).and_then(|(l, r)| Ok(Literal::from(l <= r)))
-                        },
-                        TokenType::Minus => {
-                            cast_nums(left, right).and_then(|(l, r)| Ok(Literal::Number(l - r)))
-                        },
-                        TokenType::Slash => {
-                            cast_nums(left, right).and_then(|(l, r)| Ok(Literal::Number(l / r)))
-                        },
-                        TokenType::Star => {
-                            cast_nums(left, right).and_then(|(l, r)| Ok(Literal::Number(l * r)))
-                        },
+                        TokenType::Greater => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::from(l > r))),
+                        TokenType::GreaterEqual => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::from(l >= r))),
+                        TokenType::Less => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::from(l < r))),
+                        TokenType::LessEqual => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::from(l <= r))),
+                        TokenType::Minus => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l - r))),
+                        TokenType::Slash => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l / r))),
+                        TokenType::Star => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l * r))),
                         TokenType::Plus => {
                             // number + number
-                            cast_nums(left, right).and_then(|(l, r)| Ok(Literal::Number(l + r)))
+                            cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l + r)))
                                 .or_else(|_|
                                     left.cast_string().and_then(|left| right.cast_string().and_then(|right| 
                                         Ok(Literal::String(format!("{}{}", left, right)))))) // string + string
