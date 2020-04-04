@@ -2,10 +2,12 @@ mod scanner;
 mod grammar;
 mod token;
 mod parser;
+mod eval;
 
 extern crate linefeed;
 
 use linefeed::{Interface, ReadResult};
+use eval::Evaluable;
 use std::env;
 
 static mut HAD_ERROR: bool = false;
@@ -54,7 +56,7 @@ fn run(source_code: String) {
     let mut scanner = scanner::Scanner::new(source_code);
     let tokens = scanner.scan_tokens();
     match parser::Parser::new(tokens).parse() {
-        Ok(expr) => println!("{}", expr),
+        Ok(expr) => println!("{:?}", expr.evaluate()),
         Err(e) => error(e)
     }
 }

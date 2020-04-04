@@ -22,7 +22,7 @@ pub struct TokenDetails {
     pub line: i32
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     String(String),
     Number(f64),

@@ -205,6 +205,6 @@ impl Parser {
             }
         }
 
-        self.advance()
+        self.advance();
     }
 }
