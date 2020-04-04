@@ -19,13 +19,9 @@ impl Evaluable for Expr {
                         TokenType::Minus => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l - r))),
                         TokenType::Slash => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l / r))),
                         TokenType::Star => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l * r))),
-                        TokenType::Plus => {
-                            // number + number
-                            cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l + r)))
-                                .or_else(|_|
-                                    left.cast_string().and_then(|left| right.cast_string().and_then(|right| 
-                                        Ok(Literal::String(format!("{}{}", left, right)))))) // string + string
-                        },
+                        TokenType::Plus => cast_nums(&left, &right).and_then(|(l, r)| Ok(Literal::Number(l + r)))
+                            .or_else(|_| cast_strs(&left, &right).and_then(|(l, r)| Ok(Literal::String(format!("{}{}", l, r)))))
+                            .or(Err(cast_err("string or number"))),
                         TokenType::EqualEqual => Ok(Literal::from(left.is_equal(&right))),
                         TokenType::BangEqual => Ok(Literal::from(!left.is_equal(&right))),
                         _ => Ok(Literal::Nil) // unreachable
@@ -49,6 +45,10 @@ impl Evaluable for Expr {
 
 fn cast_nums(left: &Literal, right: &Literal) -> Result<(f64, f64), RloxError> {
     left.cast_number().and_then(|left| right.cast_number().and_then(|right| Ok((left, right))))
+}
+
+fn cast_strs(left: &Literal, right: &Literal) -> Result<(String, String), RloxError> {
+    left.cast_string().and_then(|left| right.cast_string().and_then(|right| Ok((left, right))))
 }
 
 impl Literal {
