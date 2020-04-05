@@ -32,36 +32,39 @@ fn run_prompt() {
     reader.set_prompt("rlox> ").expect("Couldn't set reader prompt.");
 
     while let ReadResult::Input(input) = reader.read_line().expect("Couldn't read line.") {
-        run(input.clone());
+        run(input.clone()).err().map(|e| report_error(e));
         if !input.trim().is_empty() {
             reader.add_history(input);
         }
-        unsafe { HAD_ERROR = false; }
     }
 }
 
 fn run_file(file_name: String) {
     let file_contents = std::fs::read_to_string(file_name).expect("Couldn't read file.");
-    run(file_contents);
-    unsafe {
-        if HAD_ERROR {
-            std::process::exit(65);
-        }
-    }
+    run(file_contents).err().map(|e| {
+        report_error(e);
+        std::process::exit(65);
+    });
 }
 
 // Interpretation
 
-fn run(source_code: String) {
+fn run(source_code: String) -> Result<(), RloxError> {
     let mut scanner = scanner::Scanner::new(source_code);
-    let tokens = scanner.scan_tokens();
-    match parser::Parser::new(tokens).parse() {
-        Ok(expr) => println!("{:?}", expr.evaluate()),
-        Err(e) => error(e)
+    match scanner.scan_tokens() {
+        Ok(tokens) => parser::Parser::new(tokens).parse()
+            .and_then(|expr| expr.evaluate())
+            .map(|val| println!("{}", val)),
+        Err(errs) => {
+            for err in errs {
+                report_error(err);
+            }
+            Ok(())
+        }
     }
 }
 
-fn error(err: RloxError) {
+fn report_error(err: RloxError) {
     match err.line {
         Some(line) => report(line, err.location, err.message),
         None => report_internal(err.location, err.message)
@@ -69,13 +72,11 @@ fn error(err: RloxError) {
 }
 
 fn report(line: i32, location: String, message: String) {
-    eprintln!("[line {}] Error {}: {}", line, location, message);
-    unsafe { HAD_ERROR = true; }
+    eprintln!("[line {}] Error{}: {}", line, location, message);
 }
 
 fn report_internal(location: String, message: String) {
     eprintln!("Error {}: {}", location, message);
-    unsafe { HAD_ERROR = true; }
 }
 
 #[derive(Debug)]

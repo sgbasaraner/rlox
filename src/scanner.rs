@@ -1,5 +1,4 @@
 use crate::RloxError;
-use crate::error;
 use crate::token::{TokenType, Literal, Token, TokenDetails};
 
 pub struct Scanner {
@@ -33,10 +32,11 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> Vec<Token> {
+    pub fn scan_tokens(&mut self) -> Result<Vec<Token>, Vec<RloxError>> {
+        let mut errs: Vec<RloxError> = Vec::new();
         while !self.is_at_end() {
             self.start = self.current;
-            self.scan_token()
+            self.scan_token().map(|e| errs.push(e));
         }
 
         let eof_token = Token::NonLiteral(
@@ -48,7 +48,7 @@ impl Scanner {
         );
 
         self.tokens.push(eof_token);
-        self.tokens.clone()
+        if errs.is_empty() { Ok(self.tokens.clone()) } else { Err(errs) }
     }
 }
 
@@ -86,7 +86,7 @@ impl Scanner {
         self.tokens.push(token);
     }
 
-    fn scan_token(&mut self) {
+    fn scan_token(&mut self) -> Option<RloxError> {
         let c = self.advance();
         match c {
             '(' => self.add_non_literal_token(TokenType::LeftParen),
@@ -142,17 +142,18 @@ impl Scanner {
             },
             ' ' | '\r' | '\t' => (), // whitespace, do nothing
             '\n' => self.line = self.line + 1, // newline
-            '"' => self.string(),
+            '"' => return self.string(),
             _ => {
                 if c.is_digit(10) {
                     self.number()
                 } else if is_alphabetic_or_underscore(c) {
                     self.identifier()
                 } else {
-                    error(RloxError::new(self.line, "Unexpected character.", ""))
+                    return Some(RloxError::new(self.line, "Unexpected character.", ""));
                 }
             }
-        }
+        };
+        None
     }
 
     fn match_char(&mut self, expected: char) -> bool {
@@ -176,7 +177,7 @@ impl Scanner {
         }
     }
 
-    fn string(&mut self) {
+    fn string(&mut self) -> Option<RloxError> {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line = self.line + 1
@@ -185,8 +186,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            error(RloxError::new(self.line, "Unterminated string.", ""));
-            return;
+            return Some(RloxError::new(self.line, "Unterminated string.", ""));
         }
 
         // The closing ".
@@ -195,6 +195,7 @@ impl Scanner {
         // Trim the surrounding quotes
         let val = (self.source_code[(self.start + 1)..(self.current - 1)]).to_string();
         self.add_token(TokenType::String, Some(Literal::String(val)));
+        None
     }
 
     fn number(&mut self) {
