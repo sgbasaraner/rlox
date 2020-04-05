@@ -10,8 +10,6 @@ use linefeed::{Interface, ReadResult};
 use eval::Evaluable;
 use std::env;
 
-static mut HAD_ERROR: bool = false;
-
 fn main() {
     let args: Vec<String> = env::args().collect();
     match args.len() {
